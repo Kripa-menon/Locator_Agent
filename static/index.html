@@ -1,0 +1,238 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Locator Finder Agent</title>
+    <style>
+      :root{--accent:#0b66c2;--muted:#6b7280;--card:#ffffff;--bg:#f7f9fb}
+      html,body{height:100%;}
+      body{font-family: Inter, Arial, sans-serif; margin:0; background:var(--bg); color:#111}
+      header{background:#fff;border-bottom:1px solid #e6edf3;padding:16px 24px}
+      main{display:flex;gap:20px;padding:20px;max-width:1200px;margin:18px auto}
+      .left{flex:0 0 420px}
+      .right{flex:1}
+      .card{background:var(--card);border:1px solid #e6edf3;padding:12px;border-radius:8px;box-shadow:0 1px 2px rgba(16,24,40,0.03)}
+      label{display:block;margin-bottom:6px;font-weight:600}
+      input[type=text], input, select, textarea{width:100%;padding:8px;border:1px solid #d7e2ea;border-radius:6px}
+      button{background:var(--accent);color:#fff;border:none;padding:8px 10px;border-radius:6px;cursor:pointer;margin:4px}
+      button.secondary{background:#fff;color:var(--accent);border:1px solid #d7e2ea}
+      .sessions{display:flex;flex-direction:column;gap:8px}
+      .controls{display:flex;gap:8px;align-items:center}
+      .results-list{display:flex;flex-direction:column;gap:12px}
+      .result-item{padding:12px;border-radius:8px;background:#fff;border:1px solid #e6edf3}
+      .result-item h3{margin:0 0 6px 0;font-size:14px}
+      pre{background:#0f1724;color:#e6eef8;padding:12px;border-radius:6px;overflow:auto}
+      .meta{color:var(--muted);font-size:13px}
+      .small{font-size:12px;color:var(--muted)}
+      .actions{margin-top:8px}
+      .row{display:flex;gap:8px;align-items:center}
+    </style>
+  </head>
+  <body>
+    <header>
+      <div style="display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto">
+        <h1 style="margin:0;font-size:18px">Locator Finder Agent</h1>
+        <div class="small">Local only — renders live DOM via Playwright</div>
+      </div>
+    </header>
+    <main>
+      <div class="left">
+        <div class="card">
+          <label>URL</label>
+          <div class="row"><input id="url" type="text" placeholder="https://example.com/login" /><button id="open">Open</button><button id="continue" class="secondary">Continue</button></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <strong>Sessions</strong>
+          <div class="sessions" style="margin-top:8px">
+            <div class="row"><select id="sessionSelect"><option value="default">default</option></select><button id="refreshSessions" class="secondary">Refresh</button></div>
+            <div class="row"><input id="newSessionName" placeholder="session name" /><button id="createSession">Create</button></div>
+            <div class="row"><button id="activateSession">Activate</button><button id="closeSession" class="secondary">Close</button></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <label>Description</label>
+          <div class="row"><input id="desc" type="text" placeholder="e.g. login button" /><button id="describe">Describe</button></div>
+          <label style="margin-top:8px">Or pick selector</label>
+          <div class="row"><input id="picksel" placeholder="e.g. button#submit" /><button id="pick">Pick</button></div>
+        </div>
+      </div>
+      <div class="right">
+        <div class="card">
+          <h2 style="margin-top:0">Results</h2>
+          <div id="results" class="results-list"></div>
+        </div>
+      </div>
+    </main>
+
+    <div id="results"></div>
+
+    <script>
+      async function post(path, body){
+        const r = await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+        return r.json();
+      }
+      async function get(path){ const r = await fetch(path); return r.json(); }
+
+      function makeCodeBlock(snippets){
+        const container = document.createElement('div');
+        const langs = Object.keys(snippets||{});
+        if(langs.length===0) return document.createElement('div');
+        const select = document.createElement('select');
+        langs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;o.selected=(l==='python');select.appendChild(o)});
+        const pre = document.createElement('pre'); pre.textContent = snippets['python'] || snippets[langs[0]];
+        const btn = document.createElement('button'); btn.textContent='Copy'; btn.onclick=()=>{navigator.clipboard.writeText(pre.textContent)};
+        select.onchange = ()=>{ pre.textContent = snippets[select.value]; };
+        container.appendChild(select); container.appendChild(btn); container.appendChild(pre);
+        return container;
+      }
+
+      async function fetchSessions(){
+        const data = await get('/sessions');
+        const sel = document.getElementById('sessionSelect');
+        sel.innerHTML = '';
+        const optDefault = document.createElement('option'); optDefault.value='default'; optDefault.textContent='default'; sel.appendChild(optDefault);
+        (data||[]).forEach(s=>{ const o=document.createElement('option'); o.value=s.id; o.textContent=s.name||s.id; sel.appendChild(o); });
+      }
+
+      document.getElementById('refreshSessions').onclick = fetchSessions;
+
+      document.getElementById('createSession').onclick = async ()=>{
+        const name = document.getElementById('newSessionName').value;
+        const res = await post('/sessions',{name});
+        await fetchSessions();
+        alert('Created '+res.id);
+      }
+
+      document.getElementById('activateSession').onclick = async ()=>{
+        const sid = document.getElementById('sessionSelect').value;
+        if(!sid){ alert('Select a session'); return }
+        const res = await post('/sessions/'+sid+'/activate',{});
+        alert('Activated '+sid);
+      }
+
+      document.getElementById('closeSession').onclick = async ()=>{
+        const sid = document.getElementById('sessionSelect').value;
+        if(!sid || sid==='default'){ alert('Select a non-default session to close'); return }
+        const res = await post('/sessions/'+sid+'/close',{});
+        await fetchSessions();
+        alert('Closed '+sid);
+      }
+
+      document.getElementById('open').onclick = async ()=>{
+        const url = document.getElementById('url').value;
+        const session = document.getElementById('sessionSelect').value;
+        const res = await post('/open',{url, session});
+        alert(JSON.stringify(res));
+      }
+
+      document.getElementById('continue').onclick = async ()=>{
+        const res = await post('/continue',{});
+        alert('Ready');
+      }
+
+      document.getElementById('describe').onclick = async ()=>{
+        const description = document.getElementById('desc').value;
+        const session = document.getElementById('sessionSelect').value;
+        const res = await post('/describe',{description, session});
+        const out = document.getElementById('results');
+        out.innerHTML = '';
+        if(!res.matches || res.matches.length==0){ out.innerHTML = '<div>No matches. Try a more specific description.</div>'; return }
+        res.matches.forEach(m=>{
+          const box = document.createElement('div'); box.className='result-item';
+          const best = m.ranked.chosen_best || m.ranked.best;
+          const title = document.createElement('h3');
+          title.textContent = best ? `${best.type} ${best.value}` : 'No locator';
+          box.appendChild(title);
+          const meta = document.createElement('div'); meta.className='meta'; meta.textContent = best ? `matches=${best.match_count} • stability=${best.stability} • reason=${best.reason}` : '';
+          box.appendChild(meta);
+          const alt = document.createElement('div'); alt.className='small'; alt.textContent = 'Alternatives: ' + ((m.ranked.alternatives||[]).map(a=>`${a.type} ${a.value} (${a.stability})`).join(' | '));
+          box.appendChild(alt);
+          const risk = document.createElement('div'); risk.className='small';
+          const risks = [];
+          if(best && best.reason && best.reason.toLowerCase().includes('auto')) risks.push('ID looks auto-generated');
+          if(best && best.match_count && best.match_count!=1) risks.push('Matches != 1');
+          if(best && best.cross_origin_frame) risks.push('Inside cross-origin iframe');
+          if(best && best.found_shadow) risks.push('Inside shadow DOM');
+          risk.textContent = 'Risks: ' + (risks.length?risks.join('; '):'None');
+          box.appendChild(risk);
+          const codeblock = makeCodeBlock(m.code);
+          box.appendChild(codeblock);
+          const actions = document.createElement('div'); actions.className='actions';
+          const hl = document.createElement('button'); hl.textContent='Highlight'; hl.onclick = async ()=>{
+            const best = m.ranked.chosen_best || m.ranked.best;
+            if(!best) return alert('No locator');
+            const session = document.getElementById('sessionSelect').value;
+            const res = await post('/highlight',{type:best.type, value:best.value, session});
+            hl.textContent = 'Highlighted '+res.highlighted;
+            setTimeout(()=>hl.textContent='Highlight',2000);
+          };
+          const uhl = document.createElement('button'); uhl.className='secondary'; uhl.textContent='Unhighlight'; uhl.onclick = async ()=>{ const session = document.getElementById('sessionSelect').value; const r=await post('/unhighlight',{session}); uhl.textContent='Removed '+r.unhighlighted; setTimeout(()=>uhl.textContent='Unhighlight',2000); };
+          actions.appendChild(hl); actions.appendChild(uhl);
+          // hover preview: highlight on mouseenter, unhighlight on leave
+          box.addEventListener('mouseenter', async ()=>{
+            const best = m.ranked.chosen_best || m.ranked.best;
+            if(!best) return;
+            const session = document.getElementById('sessionSelect').value;
+            // prefer a short-lived highlight; we'll remove on mouseleave
+            await post('/highlight',{type:best.type, value:best.value, session});
+          });
+          box.addEventListener('mouseleave', async ()=>{
+            const session = document.getElementById('sessionSelect').value;
+            await post('/unhighlight',{session});
+          });
+          box.appendChild(actions);
+          out.appendChild(box);
+        })
+      }
+
+      document.getElementById('pick').onclick = async ()=>{
+        const selector = document.getElementById('picksel').value;
+        const session = document.getElementById('sessionSelect').value;
+        const res = await post('/pick',{selector, session});
+        document.getElementById('results').innerHTML = '<pre>'+JSON.stringify(res,null,2)+'</pre>';
+      }
+
+      // initial load
+      fetchSessions();
+
+      // small toast helper
+      function toast(msg){
+        const t = document.createElement('div');
+        t.textContent = msg;
+        t.style.position = 'fixed'; t.style.right='20px'; t.style.top='20px'; t.style.background='rgba(15,23,36,0.9)'; t.style.color='#fff'; t.style.padding='8px 12px'; t.style.borderRadius='6px'; t.style.zIndex='100000';
+        document.body.appendChild(t);
+        setTimeout(()=>{ t.remove(); }, 1500);
+      }
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', async (e)=>{
+        const session = document.getElementById('sessionSelect').value;
+        if((e.ctrlKey || e.metaKey) && (e.key === 'o' || e.key === 'O')){
+          e.preventDefault();
+          const url = document.getElementById('url').value;
+          if(!url) return toast('Enter URL first');
+          await post('/open',{url, session});
+          toast('Opened');
+        }
+        if((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')){
+          e.preventDefault();
+          const desc = document.getElementById('desc').value;
+          if(!desc){ document.getElementById('desc').focus(); return }
+          const res = await post('/describe',{description: desc, session});
+          document.getElementById('results').innerHTML = '';
+          if(!res.matches || res.matches.length==0){ document.getElementById('results').innerHTML = '<div class="small">No matches</div>'; return }
+          // reuse display logic by calling click handler
+          document.getElementById('describe').click();
+          toast('Described');
+        }
+        if(e.key === 'Escape'){
+          e.preventDefault();
+          await post('/unhighlight',{session});
+          toast('Cleared highlights');
+        }
+      });
+    </script>
+  </body>
+ </html>

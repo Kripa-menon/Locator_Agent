@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+playwright
+requests
+pytest
+pre-commit
+black
+flake8
+isort
