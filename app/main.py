@@ -136,35 +136,41 @@ async def describe(req: Request):
     results = []
     for el in elements:
         ranked = locator.rank_element(el)
-        # verify candidates
-        for c in [ranked['best']] + ranked.get('alternatives', []):
+        candidates = [ranked['best']] + ranked.get('alternatives', [])
+        for c in candidates:
             if not c:
                 continue
             loc_type = c['type']
             val = c['value']
-            # for xpath provide string starting with // or /
-            if loc_type == 'xpath' and not val.startswith('/'):
-                val = '//' + val
+            if loc_type == 'xpath':
+                stripped = (val or '').strip()
+                if not stripped.startswith(('/', '(', './/')):
+                    val = '//' + val
             ver = await browser.verify_locator(loc_type, val, session_id=session)
-            c['match_count'] = ver.get('count', 0)
+            match_count = ver.get('count', 0)
+            if match_count is None:
+                match_count = 0
+            c['match_count'] = int(match_count)
             c['cross_origin_frame'] = ver.get('cross_origin_frame', False)
             c['found_shadow'] = ver.get('found_shadow', False)
-            # include frame hints if available
             c['frames'] = ver.get('frames', [])
-        # choose best that matches exactly 1
-        best = None
-        if ranked['best'] and ranked['best'].get('match_count') == 1:
-            best = ranked['best']
-        else:
-            for alt in ranked.get('alternatives', []):
-                if alt.get('match_count') == 1:
-                    best = alt
-                    break
-        ranked['chosen_best'] = best or ranked['best']
-        # if chosen_best indicates frames, pick a likely frame hint
+
+        ordered = sorted(
+            [c for c in candidates if c],
+            key=lambda c: (
+                0 if c.get('match_count') == 1 else 1,
+                0 if isinstance(c.get('match_count'), int) and c.get('match_count', 0) > 0 else 1,
+                0 if ('text' in (c.get('reason') or '').lower() or 'normalize-space' in str(c.get('value') or '') or 'placeholder' in (c.get('reason') or '').lower() or 'label' in (c.get('reason') or '').lower()) else 1,
+                0 if c.get('type') == 'xpath' else 1,
+                {'High': 0, 'Medium': 1, 'Low': 2}.get(c.get('stability', 'Low'), 2),
+            )
+        )
+        ranked['best'] = ordered[0] if ordered else None
+        ranked['alternatives'] = ordered[1:] if ordered else []
+        ranked['chosen_best'] = ranked['best']
+
         frame_hint = None
         if ranked['chosen_best'] and ranked['chosen_best'].get('frames'):
-            # pick first non-empty src or named frame
             for f in ranked['chosen_best']['frames']:
                 if f.get('name') or f.get('id') or f.get('src'):
                     frame_hint = f
@@ -202,8 +208,49 @@ async def pick_element(req: Request):
     if not selector:
         raise HTTPException(status_code=400, detail="Missing selector")
     el = await browser.pick(selector, session_id=session)
+    if not el:
+        return JSONResponse({"ranked": {"best": None, "alternatives": [], "raw": None, "chosen_best": None}, "code": {}})
     ranked = locator.rank_element(el)
-    code = codegen.generate(ranked['best'], ranked.get('frame'))
+    candidates = [ranked['best']] + ranked.get('alternatives', [])
+    for c in candidates:
+        if not c:
+            continue
+        loc_type = c['type']
+        val = c['value']
+        if loc_type == 'xpath':
+            stripped = (val or '').strip()
+            if not stripped.startswith(('/', '(', './/')):
+                val = '//' + val
+        ver = await browser.verify_locator(loc_type, val, session_id=session)
+        match_count = ver.get('count', 0)
+        if match_count is None:
+            match_count = 0
+        c['match_count'] = int(match_count)
+        c['cross_origin_frame'] = ver.get('cross_origin_frame', False)
+        c['found_shadow'] = ver.get('found_shadow', False)
+        c['frames'] = ver.get('frames', [])
+
+    ordered = sorted(
+        [c for c in candidates if c],
+        key=lambda c: (
+            0 if c.get('match_count') == 1 else 1,
+            0 if isinstance(c.get('match_count'), int) and c.get('match_count', 0) > 0 else 1,
+            0 if ('text' in (c.get('reason') or '').lower() or 'normalize-space' in str(c.get('value') or '') or 'placeholder' in (c.get('reason') or '').lower() or 'label' in (c.get('reason') or '').lower()) else 1,
+            0 if c.get('type') == 'xpath' else 1,
+            {'High': 0, 'Medium': 1, 'Low': 2}.get(c.get('stability', 'Low'), 2),
+        )
+    )
+    ranked['best'] = ordered[0] if ordered else None
+    ranked['alternatives'] = ordered[1:] if ordered else []
+    ranked['chosen_best'] = ranked['best']
+
+    frame_hint = None
+    if ranked['chosen_best'] and ranked['chosen_best'].get('frames'):
+        for f in ranked['chosen_best']['frames']:
+            if f.get('name') or f.get('id') or f.get('src'):
+                frame_hint = f
+                break
+    code = codegen.generate(ranked['chosen_best'], frame_hint)
     return JSONResponse({"ranked": ranked, "code": code})
 
 

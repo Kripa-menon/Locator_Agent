@@ -1,5 +1,5 @@
 import pytest
-from app.locator import LocatorService, looks_auto_id
+from app.locator import LocatorService, looks_auto_id, select_best_candidate
 
 
 def test_auto_id_detection():
@@ -11,8 +11,31 @@ def test_auto_id_detection():
 
 def test_rank_element_basic():
     svc = LocatorService()
-    el = {'tag':'BUTTON','outerHTML':'<button id="submit" data-testid="login-submit">Log in</button>','id':'submit','classes':'btn primary','aria':None,'placeholder':None,'name':None}
+    el = {
+        'tag': 'BUTTON',
+        'outerHTML': '<button id="submit" data-testid="login-submit">Log in</button>',
+        'id': 'submit',
+        'classes': 'btn primary',
+        'aria': None,
+        'placeholder': None,
+        'name': None,
+    }
     r = svc.rank_element(el)
     assert r['best'] is not None
-    assert any('data-test' in (a.get('reason') or '') or 'data-testid' in (a.get('reason') or '') or a.get('value','').startswith('[data-') for a in ([r['best']] + r['alternatives']))
-*** End Patch
+    assert any(
+        'data-test' in (a.get('reason') or '') or 'data-testid' in (a.get('reason') or '') or a.get('value', '').startswith('[data-')
+        for a in ([r['best']] + r['alternatives'])
+    )
+
+
+def test_select_best_candidate_prefers_unique_match():
+    candidates = [
+        {'type': 'css', 'value': 'a.btn', 'reason': 'short css (class)', 'stability': 'Medium', 'match_count': 3},
+        {'type': 'xpath', 'value': "//a[normalize-space()='Enroll Yourself']", 'reason': 'text-equals', 'stability': 'Medium', 'match_count': 1},
+    ]
+
+    best = select_best_candidate(candidates)
+
+    assert best is not None
+    assert best['type'] == 'xpath'
+    assert best['match_count'] == 1

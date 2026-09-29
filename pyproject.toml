@@ -6,4 +6,7 @@ profile = "black"
 
 [flake8]
 max-line-length = 88
-exclude = .git,__pycache__,.venv
+exclude = [".git", "__pycache__", ".venv"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
