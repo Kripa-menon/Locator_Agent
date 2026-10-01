@@ -2,7 +2,58 @@
 
 Runs locally. Uses FastAPI + Playwright to open a visible browser so you can log in to protected sites.
 
-Setup
+## Prerequisites
+
+Before running the project, make sure the following are installed:
+
+- Python 3.10 or newer
+- Git
+- PowerShell, Command Prompt, or Git Bash on Windows
+
+## Windows setup from scratch
+
+### PowerShell / Command Prompt
+
+```powershell
+git clone https://github.com/Kripa-menon/Locator_Agent.git
+cd Locator_Agent
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python -m playwright install chromium
+uvicorn app.main:app --reload
+```
+
+Open: http://127.0.0.1:8000
+
+### Git Bash
+
+```bash
+git clone https://github.com/Kripa-menon/Locator_Agent.git
+cd Locator_Agent
+python -m venv .venv
+source .venv/Scripts/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python -m playwright install chromium
+uvicorn app.main:app --reload
+```
+
+### If PowerShell blocks activation
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+### If Playwright browser install fails
+
+```powershell
+python -m playwright install --with-deps chromium
+```
+
+## Setup
 
 1. Create a venv and activate it
 
