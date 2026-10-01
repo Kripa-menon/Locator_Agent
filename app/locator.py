@@ -24,21 +24,56 @@ def _escape_attr(v: str) -> str:
     return str(v).replace("'", "\\'")
 
 
+def dedupe_candidates(candidates):
+    seen = set()
+    out = []
+    for c in candidates or []:
+        if not c:
+            continue
+        key = (str(c.get('type') or '').lower(), str(c.get('value') or '').strip())
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(c)
+    return out
+
+
+def _selector_priority(reason: str, value: str):
+    reason_l = (reason or '').lower()
+    value_l = (value or '').lower()
+
+    if 'data-testid' in reason_l or 'data-test' in reason_l or 'data-qa' in reason_l or 'data-eid' in reason_l:
+        return 1
+    if 'xpath by id' in reason_l or 'by id' in reason_l or 'id' in reason_l or value_l.startswith('#') or "@id=" in value_l:
+        return 0
+    if 'xpath by name' in reason_l or 'by name' in reason_l or 'name' in reason_l or "@name=" in value_l:
+        return 2
+    if 'aria-label' in reason_l or 'placeholder' in reason_l:
+        return 3
+    if 'text-equals' in reason_l or 'normalize-space' in value_l:
+        return 4
+    if 'class' in reason_l or 'tag + class' in reason_l or 'short css (class)' in reason_l or 'xpath by class' in reason_l:
+        return 5
+    if 'positional fallback' in reason_l:
+        return 6
+    return 7
+
+
 def select_best_candidate(candidates):
     def sort_key(c):
         if not c:
-            return (1, 1, 1, 1, 1, 1)
+            return (99, 99, 99, 99, 99, 99, 99)
         stability_rank = {'High': 0, 'Medium': 1, 'Low': 2}.get(c.get('stability', 'Low'), 2)
         match_count = c.get('match_count')
         reason = (c.get('reason') or '').lower()
         value = str(c.get('value') or '')
+        attr_rank = _selector_priority(reason, value)
         is_unique_match = 0 if match_count == 1 else 1
         is_positive_count = 0 if isinstance(match_count, int) and match_count > 0 else 1
-        has_text_signal = 0 if ('text' in reason or 'normalize-space' in value or 'label' in reason or 'placeholder' in reason) else 1
-        prefers_xpath = 0 if c.get('type') == 'xpath' and has_text_signal == 0 else 1
-        return (is_unique_match, is_positive_count, has_text_signal, prefers_xpath, stability_rank, 0 if c.get('type') == 'xpath' else 1)
+        prefers_css = 0 if c.get('type') == 'css' else 1
+        return (attr_rank, is_unique_match, is_positive_count, prefers_css, stability_rank, 0 if c.get('type') == 'xpath' else 1, 0 if c.get('value') else 1)
 
-    filtered = [c for c in candidates if c]
+    filtered = dedupe_candidates(candidates)
     if not filtered:
         return None
     return sorted(filtered, key=sort_key)[0]
@@ -134,6 +169,8 @@ class LocatorService:
 
         # positional fallback
         candidates.append({'type': 'xpath', 'value': f"(//{tag})[1]", 'reason': 'positional fallback', 'stability': 'Low'})
+
+        candidates = dedupe_candidates(candidates)
 
         for c in candidates:
             c['match_count'] = None

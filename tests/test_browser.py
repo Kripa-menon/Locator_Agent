@@ -95,6 +95,58 @@ async def test_find_by_description_matches_adjacent_text_for_checkbox():
 
 
 @pytest.mark.asyncio
+async def test_find_by_description_ignores_first_name_from_neighboring_input_when_matching_email():
+    browser = BrowserController()
+    await browser.start()
+
+    class FakePage:
+        def is_closed(self):
+            return False
+
+        async def evaluate(self, script, arg=None):
+            if not arg:
+                return []
+            needle = str(arg).lower()
+            if 'first name' in needle:
+                return [
+                    {
+                        'tag': 'INPUT',
+                        'outerHTML': '<input id="userEmail" name="userEmail" type="email" />',
+                        'id': 'userEmail',
+                        'name': 'userEmail',
+                        'classes': '',
+                        'aria': None,
+                        'placeholder': 'Email',
+                        'label': 'Email',
+                        'text': None,
+                        'title': None,
+                    },
+                    {
+                        'tag': 'INPUT',
+                        'outerHTML': '<input id="firstName" name="firstName" type="text" />',
+                        'id': 'firstName',
+                        'name': 'firstName',
+                        'classes': '',
+                        'aria': None,
+                        'placeholder': 'First Name',
+                        'label': 'First Name',
+                        'text': None,
+                        'title': None,
+                    },
+                ]
+            return []
+
+    browser.pages['default'] = FakePage()
+    results = await browser.find_by_description('first name', session_id='default')
+
+    assert results, 'Expected the first-name input to be returned.'
+    assert any(item.get('id') == 'firstName' for item in results)
+    assert not any(item.get('id') == 'userEmail' for item in results)
+
+    await browser.close()
+
+
+@pytest.mark.asyncio
 async def test_verify_locator_handles_positional_xpath_value():
     browser = BrowserController()
     await browser.start()
@@ -208,6 +260,110 @@ async def test_find_by_description_ignores_button_when_username_is_a_neighboring
     assert results, 'Expected the username field to match.'
     assert any(item.get('tag') == 'INPUT' and 'username' in str(item.get('placeholder') or item.get('label') or '').lower() for item in results)
     assert not any(item.get('tag') == 'BUTTON' for item in results)
+
+    await browser.close()
+
+
+@pytest.mark.asyncio
+async def test_find_by_description_accepts_edit_action_link_for_button_query():
+    browser = BrowserController()
+    await browser.start()
+
+    class FakePage:
+        def is_closed(self):
+            return False
+
+        async def evaluate(self, script, arg=None):
+            if not arg:
+                return []
+            needle = str(arg).lower()
+            if 'edit button' in needle:
+                return [
+                    {
+                        'tag': 'A',
+                        'outerHTML': '<a href="#edit">edit</a>',
+                        'id': None,
+                        'name': None,
+                        'classes': None,
+                        'aria': None,
+                        'placeholder': None,
+                        'label': 'edit',
+                        'text': 'edit',
+                        'title': None,
+                    },
+                    {
+                        'tag': 'A',
+                        'outerHTML': '<a href="#delete">delete</a>',
+                        'id': None,
+                        'name': None,
+                        'classes': None,
+                        'aria': None,
+                        'placeholder': None,
+                        'label': 'delete',
+                        'text': 'delete',
+                        'title': None,
+                    },
+                ]
+            return []
+
+    browser.pages['default'] = FakePage()
+    results = await browser.find_by_description('edit button', session_id='default')
+
+    assert results, 'Expected the edit action link to match the button-like query.'
+    assert any(item.get('tag') == 'A' and 'edit' in str(item.get('text') or item.get('label') or '').lower() for item in results)
+    assert not any(item.get('tag') == 'A' and 'delete' in str(item.get('text') or item.get('label') or '').lower() for item in results)
+
+    await browser.close()
+
+
+@pytest.mark.asyncio
+async def test_find_by_description_requires_birth_tokens_not_shared_with_date_picker():
+    browser = BrowserController()
+    await browser.start()
+
+    class FakePage:
+        def is_closed(self):
+            return False
+
+        async def evaluate(self, script, arg=None):
+            if not arg:
+                return []
+            needle = str(arg).lower()
+            if 'date of birth' in needle:
+                return [
+                    {
+                        'tag': 'A',
+                        'outerHTML': '<a href="/date-picker">Date Picker</a>',
+                        'id': None,
+                        'name': None,
+                        'classes': None,
+                        'aria': None,
+                        'placeholder': None,
+                        'label': 'Date Picker',
+                        'text': 'Date Picker',
+                        'title': None,
+                    },
+                    {
+                        'tag': 'INPUT',
+                        'outerHTML': '<input id="dateOfBirthInput" />',
+                        'id': 'dateOfBirthInput',
+                        'name': None,
+                        'classes': None,
+                        'aria': None,
+                        'placeholder': None,
+                        'label': 'Date of Birth',
+                        'text': 'Date of Birth',
+                        'title': None,
+                    },
+                ]
+            return []
+
+    browser.pages['default'] = FakePage()
+    results = await browser.find_by_description('Date of Birth', session_id='default')
+
+    assert results, 'Expected the date-of-birth input to match.'
+    assert any(item.get('tag') == 'INPUT' and 'dateofbirth' in str(item.get('label') or item.get('text') or item.get('id') or '').lower().replace(' ', '') for item in results)
+    assert not any(item.get('tag') == 'A' and 'date picker' in str(item.get('label') or item.get('text') or '').lower() for item in results)
 
     await browser.close()
 

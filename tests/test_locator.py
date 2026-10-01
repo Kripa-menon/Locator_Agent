@@ -39,3 +39,49 @@ def test_select_best_candidate_prefers_unique_match():
     assert best is not None
     assert best['type'] == 'xpath'
     assert best['match_count'] == 1
+
+
+def test_select_best_candidate_prefers_id_over_xpath_when_available():
+    candidates = [
+        {'type': 'xpath', 'value': "(//input)[1]", 'reason': 'positional fallback', 'stability': 'Low', 'match_count': 1},
+        {'type': 'xpath', 'value': "//input[@id='dateOfBirthInput']", 'reason': 'xpath by id', 'stability': 'High', 'match_count': 1},
+        {'type': 'css', 'value': "#dateOfBirthInput", 'reason': 'id', 'stability': 'High', 'match_count': 1},
+    ]
+
+    best = select_best_candidate(candidates)
+
+    assert best is not None
+    assert best['value'] == '#dateOfBirthInput'
+    assert best['reason'] == 'id'
+
+
+def test_select_best_candidate_prefers_semantic_text_over_positional_fallback():
+    candidates = [
+        {'type': 'xpath', 'value': '(//a)[1]', 'reason': 'positional fallback', 'stability': 'Low', 'match_count': 1},
+        {'type': 'xpath', 'value': "//a[normalize-space()='edit']", 'reason': 'text-equals', 'stability': 'Medium', 'match_count': 10},
+    ]
+
+    best = select_best_candidate(candidates)
+
+    assert best is not None
+    assert best['value'] == "//a[normalize-space()='edit']"
+    assert 'positional fallback' not in (best.get('reason') or '').lower()
+
+
+def test_rank_element_deduplicates_same_selector_values():
+    svc = LocatorService()
+    el = {
+        'tag': 'INPUT',
+        'outerHTML': '<input id="firstName" name="firstName" type="text" />',
+        'id': 'firstName',
+        'name': 'firstName',
+        'classes': '',
+        'aria': None,
+        'placeholder': None,
+    }
+
+    ranked = svc.rank_element(el)
+    values = [c.get('value') for c in [ranked['best']] + ranked['alternatives'] if c]
+
+    assert values.count('#firstName') == 1
+    assert len(set(values)) == len(values)

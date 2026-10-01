@@ -192,6 +192,19 @@
         outline: none;
       }
 
+      select {
+        appearance: auto;
+        -webkit-appearance: menulist;
+        color: var(--text);
+        background: #fff;
+      }
+
+      select option {
+        background: #fff;
+        color: var(--text);
+        padding: 8px;
+      }
+
       input:focus, select:focus {
         border-color: rgba(31,122,224,0.7);
         box-shadow: 0 0 0 4px rgba(31,122,224,0.08);
@@ -292,61 +305,199 @@
       }
 
       .result-item {
-        background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(246,250,255,0.92));
-        border: 1px solid rgba(136, 164, 201, 0.38);
+        background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,250,255,0.94));
+        border: 1px solid rgba(136, 164, 201, 0.42);
         border-radius: 20px;
         padding: 18px 18px 14px;
         box-shadow: 0 12px 22px rgba(19, 41, 69, 0.04);
+      }
+
+      .selector-card {
+        padding-top: 14px;
       }
 
       .result-top {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
+        gap: 12px;
         margin-bottom: 10px;
+      }
+
+      .result-top .title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
       }
 
       .match-badge {
         display: inline-flex;
         align-items: center;
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-size: 0.7rem;
+        padding: 7px 12px;
+        border-radius: 9px;
+        font-size: 0.92rem;
         font-weight: 700;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        background: rgba(20,178,106,0.1);
-        color: var(--green);
+        background: rgba(31,122,224,0.12);
+        color: var(--blue-strong);
+        border: 1px solid rgba(31,122,224,0.18);
       }
 
-      .result-item h3 {
-        margin: 0;
-        font-size: clamp(1.05rem, 0.95rem + 0.45vw, 1.4rem);
-        letter-spacing: -0.03em;
+      .match-badge.success {
+        background: rgba(20,178,106,0.1);
+        color: var(--green);
+        border-color: rgba(20,178,106,0.2);
+      }
+
+      .selector-label {
+        font-size: 0.95rem;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .selector-value {
+        display: block;
+        margin: 14px 0 12px;
+        font-size: clamp(1.5rem, 1.3rem + 1vw, 3rem);
+        font-weight: 800;
+        letter-spacing: -0.05em;
         word-break: break-word;
+        line-height: 1.15;
+        color: var(--text);
       }
 
       .meta {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px 12px;
-        margin: 10px 0 12px;
+        gap: 10px 12px;
+        margin: 0 0 14px;
         color: var(--muted);
         font-size: 0.84rem;
       }
 
-      .meta span {
-        background: rgba(31,122,224,0.06);
-        border: 1px solid rgba(31,122,224,0.1);
+      .meta .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 12px;
         border-radius: 999px;
-        padding: 6px 9px;
+        border: 1px solid rgba(31,122,224,0.12);
+        background: rgba(31,122,224,0.05);
+        font-weight: 600;
+      }
+
+      .meta .pill.success {
+        background: rgba(20,178,106,0.1);
+        border-color: rgba(20,178,106,0.2);
+        color: var(--green);
+      }
+
+      .meta .pill.warning {
+        background: rgba(243,163,59,0.12);
+        border-color: rgba(243,163,59,0.25);
+        color: #b77810;
+      }
+
+      .meta .pill.danger {
+        background: rgba(220,93,75,0.12);
+        border-color: rgba(220,93,75,0.22);
+        color: var(--danger);
+      }
+
+      .meta .pill.muted {
+        background: rgba(17,24,39,0.04);
+        border-color: rgba(17,24,39,0.08);
+        color: var(--text);
       }
 
       .small {
         color: var(--muted);
         font-size: 0.8rem;
         line-height: 1.5;
+      }
+
+      .result-warning {
+        display: none;
+      }
+
+      .alternative-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 18px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(136, 164, 201, 0.3);
+        color: var(--text);
+        font-weight: 700;
+      }
+
+      .alternative-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .alternative-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 1px solid rgba(136, 164, 201, 0.28);
+        border-radius: 12px;
+        background: rgba(255,255,255,0.5);
+      }
+
+      .alternative-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        font-size: 0.95rem;
+      }
+
+      .alternative-type {
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        text-transform: uppercase;
+        min-width: 72px;
+      }
+
+      .alternative-value {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text);
+      }
+
+      .alternative-meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .alternative-meta .ok {
+        color: var(--green);
+        font-weight: 700;
+      }
+
+      .alternative-meta .status-high {
+        color: var(--green);
+        font-weight: 700;
+      }
+
+      .alternative-meta .status-medium {
+        color: #b77810;
+        font-weight: 700;
+      }
+
+      .alternative-meta .status-low {
+        color: var(--danger);
+        font-weight: 700;
       }
 
       .risk-row {
@@ -413,6 +564,33 @@
         color: var(--muted);
       }
 
+      .loader {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(31,122,224,0.08);
+        color: var(--blue-strong);
+        font-weight: 700;
+        font-size: 0.82rem;
+      }
+
+      .loader::before {
+        content: "";
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid rgba(31,122,224,0.25);
+        border-top-color: var(--blue-strong);
+        animation: spin 0.8s linear infinite;
+        display: inline-block;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
       @media (max-width: 1080px) {
         .layout {
           grid-template-columns: 1fr;
@@ -455,7 +633,7 @@
             <div class="stack">
               <div class="field-row compact">
                 <div class="field-wrap">
-                  <input id="url" type="text" placeholder="https://the-internet.herokuapp.com/login" />
+                  <input id="url" type="text" value="" placeholder="https://example.com" />
                 </div>
               </div>
               <div class="field-row compact">
@@ -472,13 +650,13 @@
             <div class="stack">
               <div class="field-row compact">
                 <div class="field-wrap">
-                  <input id="desc" type="text" placeholder="username field" />
+                  <input id="desc" type="text" value="" placeholder="e.g. username field" />
                 </div>
                 <button id="describe" class="primary-btn tiny-btn">Describe</button>
               </div>
               <div class="field-row compact">
                 <div class="field-wrap">
-                  <input id="picksel" type="text" placeholder="input#username" />
+                  <input id="picksel" type="text" value="" placeholder="e.g. input#username" />
                 </div>
                 <button id="pick" class="secondary-btn tiny-btn">Pick</button>
               </div>
@@ -498,7 +676,7 @@
               </div>
               <div class="field-row compact">
                 <div class="field-wrap">
-                  <input id="newSessionName" type="text" placeholder="session name" />
+                  <input id="newSessionName" type="text" value="" placeholder="session name" />
                 </div>
                 <button id="createSession" class="primary-btn tiny-btn">Create</button>
               </div>
@@ -513,7 +691,7 @@
         <section class="panel right-panel">
           <div class="results-head">
             <h2>Results</h2>
-            <div class="results-summary"><span>3 locators</span><span>•</span><span>found</span></div>
+            <div id="resultsSummary" class="results-summary"><span>0 locators</span><span>•</span><span>found</span></div>
           </div>
           <div id="results" class="results-list"></div>
         </section>
@@ -521,6 +699,41 @@
     </div>
 
     <script>
+      function getLocatorStability(matchCount){
+        const count = Number(matchCount ?? 0);
+        if (count <= 1) return { label: 'High stability', short: 'High', className: 'success' };
+        if (count <= 3) return { label: 'Medium stability', short: 'Medium', className: 'warning' };
+        return { label: 'Low stability', short: 'Low', className: 'danger' };
+      }
+
+      function updateResultsSummary(count){
+        const summary = document.getElementById('resultsSummary');
+        if (!summary) return;
+        const n = Number(count || 0);
+        summary.innerHTML = `<span>${n} locator${n === 1 ? '' : 's'}</span><span>•</span><span>${n === 0 ? 'none found' : 'found'}</span>`;
+      }
+
+      function setLoadingState(button, isLoading, label){
+        if (!button) return;
+        const original = button.dataset.originalLabel || button.textContent;
+        button.dataset.originalLabel = original;
+        button.disabled = isLoading;
+        button.style.opacity = isLoading ? '0.7' : '1';
+        button.style.cursor = isLoading ? 'wait' : 'pointer';
+        button.textContent = isLoading ? (label || 'Loading...') : original;
+      }
+
+      function clearFormValues(){
+        const ids = ['url', 'desc', 'picksel', 'newSessionName'];
+        ids.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.value = '';
+            el.setAttribute('autocomplete', 'off');
+          }
+        });
+      }
+
       async function post(path, body){
         const r = await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
         let data;
@@ -590,8 +803,13 @@
 
       document.getElementById('createSession').onclick = async () => {
         const name = document.getElementById('newSessionName').value;
+        if (!name || !name.trim()) {
+          alert('Enter a session name');
+          return;
+        }
         const res = await post('/sessions', { name });
         await fetchSessions();
+        document.getElementById('newSessionName').value = '';
         alert('Created ' + res.id);
       };
 
@@ -639,49 +857,133 @@
         const description = document.getElementById('desc').value;
         const session = document.getElementById('sessionSelect').value;
         const out = document.getElementById('results');
+        const button = document.getElementById('describe');
         out.innerHTML = '';
+        if (!description || !description.trim()) {
+          out.innerHTML = '<div class="muted-box">Enter a description to search for an element.</div>';
+          updateResultsSummary(0);
+          return;
+        }
+        setLoadingState(button, true, 'Searching...');
+        const loader = document.createElement('div');
+        loader.className = 'loader';
+        loader.textContent = 'Searching for locator';
+        out.appendChild(loader);
         try {
           const res = await post('/describe', { description, session });
+          out.innerHTML = '';
           if (!res.matches || res.matches.length === 0) {
             out.innerHTML = '<div class="muted-box">No matches. Try a more specific description.</div>';
+            updateResultsSummary(0);
             return;
           }
 
-          res.matches.forEach((m) => {
+          const seen = new Set();
+          const uniqueMatches = res.matches.filter((m) => {
+            const key = JSON.stringify({
+              best: m.ranked && (m.ranked.chosen_best || m.ranked.best),
+              alternatives: m.ranked && m.ranked.alternatives
+            });
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+
+          uniqueMatches.forEach((m) => {
             const box = document.createElement('div');
-            box.className = 'result-item';
+            box.className = 'result-item selector-card';
 
             const best = m.ranked.chosen_best || m.ranked.best;
+            const matchCount = Number(best && best.match_count !== null && best.match_count !== undefined ? best.match_count : 0);
+
             const top = document.createElement('div');
             top.className = 'result-top';
-
-            const title = document.createElement('h3');
-            title.textContent = best ? `${best.type} ${best.value}` : 'No locator';
+            const titleWrap = document.createElement('div');
+            titleWrap.className = 'title-wrap';
 
             const badge = document.createElement('span');
-            badge.className = 'match-badge';
+            badge.className = 'match-badge success';
             badge.textContent = best && best.match_count === 1 ? 'Best match' : 'Match';
 
-            top.appendChild(title);
-            top.appendChild(badge);
+            const typeLabel = document.createElement('div');
+            typeLabel.className = 'selector-label';
+            typeLabel.textContent = best && best.type ? (best.type === 'css' ? 'CSS selector' : `${best.type.toUpperCase()} selector`) : 'Selector';
+
+            titleWrap.appendChild(badge);
+            titleWrap.appendChild(typeLabel);
+            top.appendChild(titleWrap);
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'secondary-btn tiny-btn';
+            copyBtn.textContent = 'Copy';
+            copyBtn.onclick = () => navigator.clipboard.writeText(best ? best.value : '');
+            top.appendChild(copyBtn);
             box.appendChild(top);
+
+            const selectorValue = document.createElement('div');
+            selectorValue.className = 'selector-value';
+            selectorValue.textContent = best ? best.value : 'No locator';
+            box.appendChild(selectorValue);
 
             const meta = document.createElement('div');
             meta.className = 'meta';
-            const matchCount = Number(best && best.match_count !== null && best.match_count !== undefined ? best.match_count : 0);
-            meta.innerHTML = best
-              ? '<span>matches: ' + matchCount + '</span><span>stability: ' + (best.stability || 'Unknown') + '</span><span>reason: ' + (best.reason || 'n/a') + '</span>'
-              : '<span>no result</span>';
+            meta.innerHTML = [
+              '<span class="pill success">✓ ' + (matchCount === 1 ? '1 match' : matchCount + ' matches') + '</span>',
+              '<span class="pill muted">High stability</span>',
+              '<span class="pill muted">Found by ' + ((best && best.reason ? best.reason : 'selector').toLowerCase().replace(/.*?id.*/, 'id').replace(/.*?name.*/, 'name').replace(/.*?placeholder.*/, 'placeholder').replace(/.*?data-.*?/, 'attribute')) + '</span>'
+            ].join('');
             box.appendChild(meta);
 
-            const candidates = [m.ranked.chosen_best || m.ranked.best, ...(m.ranked.alternatives || [])].filter(Boolean);
-            const alt = document.createElement('div');
-            alt.className = 'small';
-            alt.innerHTML = '<strong>Ranked locators:</strong> ' + candidates.map((a, idx) => {
-              const prefix = idx === 0 ? 'BEST' : 'ALT';
-              return `${prefix} ${a.type} ${a.value} (${a.match_count ?? 0} matches)`;
-            }).join(' | ') || 'None';
-            box.appendChild(alt);
+            const alternatives = [...(m.ranked.alternatives || [])].filter(Boolean);
+            const altHeader = document.createElement('div');
+            altHeader.className = 'alternative-header';
+            const altToggle = document.createElement('button');
+            altToggle.type = 'button';
+            altToggle.className = 'secondary-btn tiny-btn';
+            altToggle.style.border = 'none';
+            altToggle.style.background = 'transparent';
+            altToggle.style.padding = '0';
+            altToggle.style.fontWeight = '700';
+            altToggle.textContent = alternatives.length ? (alternatives.length + ' hidden') : '0 hidden';
+            altHeader.innerHTML = '<span>Alternatives</span>';
+            altHeader.appendChild(altToggle);
+            box.appendChild(altHeader);
+
+            const altList = document.createElement('div');
+            altList.className = 'alternative-list';
+            altList.style.display = 'none';
+            const renderAlternatives = () => {
+              altList.innerHTML = '';
+              alternatives.forEach((a) => {
+                const item = document.createElement('div');
+                item.className = 'alternative-item';
+                const left = document.createElement('div');
+                left.className = 'alternative-left';
+                const type = document.createElement('span');
+                type.className = 'alternative-type';
+                type.textContent = a.type === 'xpath' ? 'XPath' : 'CSS';
+                const value = document.createElement('span');
+                value.className = 'alternative-value';
+                value.textContent = a.value || 'n/a';
+                left.appendChild(type);
+                left.appendChild(value);
+                const metaRight = document.createElement('div');
+                metaRight.className = 'alternative-meta';
+                const aCount = Number(a.match_count ?? 0);
+                const stability = getLocatorStability(aCount);
+                metaRight.innerHTML = '<span class="ok">' + (aCount === 1 ? '1 match' : aCount + ' matches') + '</span><span>•</span><span class="status-' + stability.short.toLowerCase() + '">' + stability.short + '</span>';
+                item.appendChild(left);
+                item.appendChild(metaRight);
+                altList.appendChild(item);
+              });
+            };
+            altToggle.onclick = () => {
+              const shown = altList.style.display !== 'none';
+              altList.style.display = shown ? 'none' : 'flex';
+              altToggle.textContent = shown ? (alternatives.length ? (alternatives.length + ' hidden') : '0 hidden') : 'Hide alternatives';
+              if (!shown) renderAlternatives();
+            };
+            box.appendChild(altList);
 
             const risk = document.createElement('div');
             risk.className = 'risk-row';
@@ -692,9 +994,6 @@
             if (best && best.found_shadow) risks.push('Inside shadow DOM');
             risk.textContent = 'Risks: ' + (risks.length ? risks.join('; ') : 'None');
             box.appendChild(risk);
-
-            const codeblock = makeCodeBlock(m.code);
-            box.appendChild(codeblock);
 
             const actions = document.createElement('div');
             actions.className = 'actions';
@@ -724,11 +1023,18 @@
             actions.appendChild(uhl);
             box.appendChild(actions);
 
+            const codeblock = makeCodeBlock(m.code);
+            box.appendChild(codeblock);
+
             out.appendChild(box);
           });
+          updateResultsSummary(uniqueMatches.length);
         } catch (err) {
           out.innerHTML = '<div class="muted-box">Describe failed: ' + (err && err.message ? err.message : 'unknown error') + '</div>';
+          updateResultsSummary(0);
           alert('Describe failed: ' + (err && err.message ? err.message : 'unknown error'));
+        } finally {
+          setLoadingState(button, false, 'Describe');
         }
       };
 
@@ -739,28 +1045,46 @@
         const ranked = data && data.ranked ? data.ranked : { best: null, alternatives: [] };
         const best = ranked.chosen_best || ranked.best;
         const card = document.createElement('div');
-        card.className = 'result-item';
+        card.className = 'result-item selector-card';
 
         const top = document.createElement('div');
         top.className = 'result-top';
-
-        const title = document.createElement('h3');
-        title.textContent = best ? `${best.type} ${best.value}` : 'No locator found';
+        const titleWrap = document.createElement('div');
+        titleWrap.className = 'title-wrap';
 
         const badge = document.createElement('span');
-        badge.className = 'match-badge';
+        badge.className = 'match-badge success';
         badge.textContent = best && Number(best.match_count) === 1 ? 'Best match' : 'Match';
 
-        top.appendChild(title);
-        top.appendChild(badge);
+        const label = document.createElement('div');
+        label.className = 'selector-label';
+        label.textContent = best && best.type ? (best.type === 'css' ? 'CSS selector' : `${best.type.toUpperCase()} selector`) : 'Selector';
+
+        titleWrap.appendChild(badge);
+        titleWrap.appendChild(label);
+        top.appendChild(titleWrap);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'secondary-btn tiny-btn';
+        copyBtn.textContent = 'Copy';
+        copyBtn.onclick = () => navigator.clipboard.writeText(best ? best.value : '');
+        top.appendChild(copyBtn);
         card.appendChild(top);
+
+        const selectorValue = document.createElement('div');
+        selectorValue.className = 'selector-value';
+        selectorValue.textContent = best ? best.value : 'No locator found';
+        card.appendChild(selectorValue);
 
         const meta = document.createElement('div');
         meta.className = 'meta';
         const matchCount = Number(best && best.match_count !== null && best.match_count !== undefined ? best.match_count : 0);
-        meta.innerHTML = best
-          ? '<span>matches: ' + matchCount + '</span><span>stability: ' + (best.stability || 'Unknown') + '</span><span>reason: ' + (best.reason || 'n/a') + '</span>'
-          : '<span>no result</span>';
+        const stability = getLocatorStability(matchCount);
+        meta.innerHTML = [
+          '<span class="pill success">✓ ' + (matchCount === 1 ? '1 match' : matchCount + ' matches') + '</span>',
+          '<span class="pill ' + stability.className + '">' + stability.label + '</span>',
+          '<span class="pill muted">Found by ' + ((best && best.reason ? best.reason : 'selector').toLowerCase().replace(/.*?id.*/, 'id').replace(/.*?name.*/, 'name').replace(/.*?placeholder.*/, 'placeholder').replace(/.*?data-.*?/, 'attribute')) + '</span>'
+        ].join('');
         card.appendChild(meta);
 
         const risks = document.createElement('div');
@@ -795,16 +1119,36 @@
         const selector = document.getElementById('picksel').value;
         const session = document.getElementById('sessionSelect').value;
         const out = document.getElementById('results');
+        const button = document.getElementById('pick');
         out.innerHTML = '';
+        if (!selector || !selector.trim()) {
+          out.innerHTML = '<div class="muted-box">Enter a selector to inspect.</div>';
+          updateResultsSummary(0);
+          return;
+        }
+        setLoadingState(button, true, 'Checking...');
+        const loader = document.createElement('div');
+        loader.className = 'loader';
+        loader.textContent = 'Checking selector';
+        out.appendChild(loader);
         try {
           const res = await post('/pick', { selector, session });
+          out.innerHTML = '';
           renderLocatorResult(res);
+          const ranked = res && res.ranked ? res.ranked : { best: null, alternatives: [] };
+          const count = [ranked.chosen_best || ranked.best, ...(ranked.alternatives || [])].filter(Boolean).length;
+          updateResultsSummary(count);
         } catch (err) {
           out.innerHTML = '<div class="muted-box">Pick failed: ' + (err && err.message ? err.message : 'unknown error') + '</div>';
+          updateResultsSummary(0);
           alert('Pick failed: ' + (err && err.message ? err.message : 'unknown error'));
+        } finally {
+          setLoadingState(button, false, 'Pick');
         }
       };
 
+      clearFormValues();
+      updateResultsSummary(0);
       fetchSessions();
 
       function toast(msg){

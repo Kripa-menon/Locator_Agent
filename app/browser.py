@@ -216,15 +216,33 @@ class BrowserController:
         js = r"""
         (needle) => {
           const normalize = (value) => (value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+          const stopWords = new Set(['a','an','and','as','at','be','by','for','from','if','in','is','it','of','on','or','the','to','with','without','button','btn','link','field','element','control','item']);
+          const tokenize = (value) => normalize(value)
+            .split(/\s+/)
+            .map((token) => token.replace(/[^a-z0-9]/g, ''))
+            .filter((token) => token.length > 1 && !stopWords.has(token));
           const matchText = (value) => {
             if (!needle) return false;
             const target = normalize(value);
-            return target.length > 0 && target.includes(normalize(needle));
+            if (target.length === 0) return false;
+            if (target.includes(normalize(needle))) return true;
+            const tokens = tokenize(needle);
+            if (tokens.length === 0) return false;
+            if (tokens.length > 1) {
+              return tokens.every((token) => target.includes(token));
+            }
+            return target.includes(tokens[0]);
           };
           function textFromNode(node) {
             if (!node) return '';
             if (node.nodeType === Node.TEXT_NODE) return node.textContent || '';
-            if (node.nodeType === Node.ELEMENT_NODE) return (node.innerText || node.textContent || '').trim();
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const tag = (node.tagName || '').toUpperCase();
+              if (tag === 'LABEL' || tag === 'SPAN' || tag === 'DIV' || tag === 'P' || tag === 'STRONG' || tag === 'EM') {
+                return (node.innerText || node.textContent || '').trim();
+              }
+              return '';
+            }
             return '';
           }
           function nearbyText(el) {
@@ -347,8 +365,21 @@ class BrowserController:
                         if value is not None and str(value).strip():
                             haystack.append(str(value).strip())
                     haystack_lower = [str(s).lower() for s in haystack]
+                    needle_tokens = [
+                        token for token in re.findall(r'[a-z0-9]+', needle.lower())
+                        if token not in {'a', 'an', 'and', 'as', 'at', 'be', 'by', 'for', 'from', 'if', 'in', 'is', 'it', 'of', 'on', 'or', 'the', 'to', 'with', 'without', 'button', 'btn', 'link', 'field', 'element', 'control', 'item'}
+                    ]
+                    normalized_needle = ' '.join(needle_tokens)
                     if not any(needle in s for s in haystack_lower):
-                        continue
+                        if len(needle_tokens) > 1:
+                            combined_text = ' '.join(haystack_lower)
+                            if not all(token in combined_text for token in needle_tokens):
+                                continue
+                        elif len(needle_tokens) == 1:
+                            if not any(needle_tokens[0] in s for s in haystack_lower):
+                                continue
+                        else:
+                            continue
                     if tag in {'A', 'BUTTON'}:
                         own_text = str(item.get('text') or '').lower().strip()
                         own_aria = str(item.get('aria') or '').lower().strip()
@@ -357,7 +388,8 @@ class BrowserController:
                         combined = ' '.join(part for part in [own_text, own_aria, own_placeholder, own_title] if part).strip()
                         if combined and len(re.findall(r'\S+', combined)) > 12:
                             continue
-                        if needle not in own_text and needle not in own_aria and needle not in own_placeholder and needle not in own_title:
+                        token_match = bool(needle_tokens) and any(token in combined.lower() for token in needle_tokens if len(token) > 1)
+                        if not token_match and needle not in combined.lower():
                             continue
                     filtered.append(item)
                 return filtered[:25]

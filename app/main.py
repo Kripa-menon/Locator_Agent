@@ -155,18 +155,45 @@ async def describe(req: Request):
             c['found_shadow'] = ver.get('found_shadow', False)
             c['frames'] = ver.get('frames', [])
 
+        def selector_priority(c):
+            reason = (c.get('reason') or '').lower()
+            value = str(c.get('value') or '').lower()
+            if 'data-testid' in reason or 'data-test' in reason or 'data-qa' in reason or 'data-eid' in reason:
+                return 1
+            if 'xpath by id' in reason or 'by id' in reason or 'id' in reason or value.startswith('#') or '@id=' in value:
+                return 0
+            if 'xpath by name' in reason or 'by name' in reason or 'name' in reason or '@name=' in value:
+                return 2
+            if 'aria-label' in reason or 'placeholder' in reason:
+                return 3
+            if 'text-equals' in reason or 'normalize-space' in value:
+                return 4
+            if 'class' in reason or 'tag + class' in reason or 'short css (class)' in reason or 'xpath by class' in reason:
+                return 5
+            if 'positional fallback' in reason:
+                return 6
+            return 7
+
         ordered = sorted(
             [c for c in candidates if c],
             key=lambda c: (
+                selector_priority(c),
                 0 if c.get('match_count') == 1 else 1,
                 0 if isinstance(c.get('match_count'), int) and c.get('match_count', 0) > 0 else 1,
-                0 if ('text' in (c.get('reason') or '').lower() or 'normalize-space' in str(c.get('value') or '') or 'placeholder' in (c.get('reason') or '').lower() or 'label' in (c.get('reason') or '').lower()) else 1,
-                0 if c.get('type') == 'xpath' else 1,
                 {'High': 0, 'Medium': 1, 'Low': 2}.get(c.get('stability', 'Low'), 2),
+                0 if c.get('type') == 'css' else 1,
             )
         )
-        ranked['best'] = ordered[0] if ordered else None
-        ranked['alternatives'] = ordered[1:] if ordered else []
+        seen = set()
+        unique_ordered = []
+        for c in ordered:
+            key = (str(c.get('type') or '').lower(), str(c.get('value') or '').strip())
+            if key in seen:
+                continue
+            seen.add(key)
+            unique_ordered.append(c)
+        ranked['best'] = unique_ordered[0] if unique_ordered else None
+        ranked['alternatives'] = unique_ordered[1:] if unique_ordered else []
         ranked['chosen_best'] = ranked['best']
 
         frame_hint = None
@@ -230,18 +257,45 @@ async def pick_element(req: Request):
         c['found_shadow'] = ver.get('found_shadow', False)
         c['frames'] = ver.get('frames', [])
 
+    def selector_priority(c):
+        reason = (c.get('reason') or '').lower()
+        value = str(c.get('value') or '').lower()
+        if 'data-testid' in reason or 'data-test' in reason or 'data-qa' in reason or 'data-eid' in reason:
+            return 1
+        if 'xpath by id' in reason or 'by id' in reason or 'id' in reason or value.startswith('#') or '@id=' in value:
+            return 0
+        if 'xpath by name' in reason or 'by name' in reason or 'name' in reason or '@name=' in value:
+            return 2
+        if 'aria-label' in reason or 'placeholder' in reason:
+            return 3
+        if 'text-equals' in reason or 'normalize-space' in value:
+            return 4
+        if 'class' in reason or 'tag + class' in reason or 'short css (class)' in reason or 'xpath by class' in reason:
+            return 5
+        if 'positional fallback' in reason:
+            return 6
+        return 7
+
     ordered = sorted(
         [c for c in candidates if c],
         key=lambda c: (
+            selector_priority(c),
             0 if c.get('match_count') == 1 else 1,
             0 if isinstance(c.get('match_count'), int) and c.get('match_count', 0) > 0 else 1,
-            0 if ('text' in (c.get('reason') or '').lower() or 'normalize-space' in str(c.get('value') or '') or 'placeholder' in (c.get('reason') or '').lower() or 'label' in (c.get('reason') or '').lower()) else 1,
-            0 if c.get('type') == 'xpath' else 1,
             {'High': 0, 'Medium': 1, 'Low': 2}.get(c.get('stability', 'Low'), 2),
+            0 if c.get('type') == 'css' else 1,
         )
     )
-    ranked['best'] = ordered[0] if ordered else None
-    ranked['alternatives'] = ordered[1:] if ordered else []
+    seen = set()
+    unique_ordered = []
+    for c in ordered:
+        key = (str(c.get('type') or '').lower(), str(c.get('value') or '').strip())
+        if key in seen:
+            continue
+        seen.add(key)
+        unique_ordered.append(c)
+    ranked['best'] = unique_ordered[0] if unique_ordered else None
+    ranked['alternatives'] = unique_ordered[1:] if unique_ordered else []
     ranked['chosen_best'] = ranked['best']
 
     frame_hint = None
